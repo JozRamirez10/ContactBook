@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.contact_book.dtos.ContactDTO;
 import com.app.contact_book.dtos.ContactUpdateDTO;
-import com.app.contact_book.entities.User;
 import com.app.contact_book.services.ContactService;
 import com.app.contact_book.services.UserService;
 
