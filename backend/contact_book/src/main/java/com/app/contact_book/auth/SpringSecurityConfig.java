@@ -7,6 +7,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,6 +19,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import com.app.contact_book.auth.filter.JwtAuthenticationFilter;
+import com.app.contact_book.auth.filter.JwtValidationFilter;
 
 @Configuration
 public class SpringSecurityConfig {
@@ -62,9 +66,14 @@ public class SpringSecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
         return http.authorizeHttpRequests(authz -> authz
-            .anyRequest().permitAll()
-            // .anyRequest().authenticated()
+            // .anyRequest().permitAll()
+            .requestMatchers(HttpMethod.POST, "/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+            .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+            .anyRequest().authenticated()
         ).cors(cors -> cors.configurationSource(configurationSource()))
+        .addFilter(new JwtAuthenticationFilter(authenticationManager()))
+        .addFilter(new JwtValidationFilter(authenticationManager()))
         .csrf(config -> config.disable())
         .sessionManagement(managment -> managment.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .build();
