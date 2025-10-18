@@ -3,6 +3,7 @@ package com.app.contact_book.entities;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -33,6 +34,7 @@ public class User {
 
     @NotBlank(message = "Password is required")
     @Size(min = 4, message = "The password must be 4 characters long")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @OneToMany(
