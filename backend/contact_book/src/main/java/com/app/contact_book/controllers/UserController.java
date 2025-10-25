@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.contact_book.dtos.UserDTO;
 import com.app.contact_book.entities.User;
 import com.app.contact_book.services.UserService;
 
@@ -42,16 +43,21 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> byId(@PathVariable Long id){
+    public ResponseEntity<?> byId(@PathVariable Long id, @AuthenticationPrincipal String userId){
         Optional<User> userOptional = this.userService.findById(id);
         if(userOptional.isPresent()){
+
+            if(!userOptional.get().getId().equals(Long.parseLong(userId))){
+                return notPermission();
+            }
+
             return ResponseEntity.status(HttpStatus.OK).body(userOptional.get());
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("Error", "User not found"));
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result){
+    public ResponseEntity<?> create(@Valid @RequestBody UserDTO user, BindingResult result){
         if(result.hasErrors()){
             return validation(result);
         }
@@ -64,14 +70,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@Valid @RequestBody User user, BindingResult result, @PathVariable Long id, 
+    public ResponseEntity<?> update(@Valid @RequestBody UserDTO user, BindingResult result, @PathVariable Long id, 
         @AuthenticationPrincipal String userId){
         if(result.hasErrors()){
             return validation(result);
         }
         
         if(!id.equals(Long.parseLong(userId))){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You don't have permission to modify this user"));
+            return notPermission();
         }
 
         Optional<User> userOptional = this.userService.update(id, user);
@@ -84,7 +90,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id, @AuthenticationPrincipal String userId){
         if(!id.equals(Long.parseLong(userId))){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You don't have permission to modify this user"));
+            return notPermission();
         }
         Optional<User> userOptional = this.userService.findById(id);
         if(userOptional.isPresent()){
@@ -92,5 +98,9 @@ public class UserController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private ResponseEntity<?> notPermission(){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You don't have permission to modify this user"));
     }
 }
