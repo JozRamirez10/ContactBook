@@ -9,6 +9,7 @@ import com.app.contact_book.entities.User;
 public interface UserRepository extends CrudRepository<User, Long>{
 
     Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
 
     boolean existsById(Long id);
     
