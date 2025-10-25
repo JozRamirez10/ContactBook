@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.app.contact_book.dtos.OAuthUserDTO;
+import com.app.contact_book.dtos.UserDTO;
 import com.app.contact_book.entities.User;
 import com.app.contact_book.repositories.UserRepository;
 
@@ -38,19 +40,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User save(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+    public User save(UserDTO dto) {
+        User user = this.dtoToUser(dto);
+        if(user.getPassword() != null && !user.getPassword().isEmpty()){
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return this.userRepository.save(user);
     }
 
     @Override
     @Transactional
-    public Optional<User> update(Long id, User user) {
+    public Optional<User> update(Long id, UserDTO dto) {
         Optional<User> userOptional = this.userRepository.findById(id);
         if(userOptional.isPresent()){
             User userDB = userOptional.get();
-            userDB.setUsername(user.getUsername());
-            userDB.setPassword(passwordEncoder.encode(user.getPassword()));
+            userDB.setUsername(dto.getUsername());
+            userDB.setPassword(passwordEncoder.encode(dto.getPassword()));
             return Optional.of(this.userRepository.save(userDB));
         }
         return Optional.empty();
@@ -71,6 +76,35 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByUsername(String username) {
         return this.userRepository.existsByUsername(username);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return this.userRepository.findByEmail(email);
+    }
+
+    @Override
+    @Transactional
+    public User saveOAuth2(OAuthUserDTO dto) {
+        User user = oAuthToUser(dto);
+        return this.userRepository.save(user);
+    }
+
+    private User dtoToUser(UserDTO dto){
+        User user = new User();
+        if(dto.getId() != null){
+            user.setId(dto.getId());
+        }
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        return user;
+    }
+
+    private User oAuthToUser(OAuthUserDTO dto){
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        return user;
     }
 
 }
