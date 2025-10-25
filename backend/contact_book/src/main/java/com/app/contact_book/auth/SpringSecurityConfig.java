@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,12 +23,21 @@ import org.springframework.web.filter.CorsFilter;
 
 import com.app.contact_book.auth.filter.JwtAuthenticationFilter;
 import com.app.contact_book.auth.filter.JwtValidationFilter;
+import com.app.contact_book.services.OidcUserServiceImpl;
+import com.app.contact_book.services.UserService;
 
 @Configuration
+@EnableWebSecurity
 public class SpringSecurityConfig {
 
     @Autowired
     private AuthenticationConfiguration authenticationConfiguration;
+
+    @Autowired
+    private CustomOAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @Autowired
+    private OidcUserServiceImpl oidcUserService;
 
     @Bean
     AuthenticationManager authenticationManager() throws Exception {
@@ -64,7 +74,7 @@ public class SpringSecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    SecurityFilterChain filterChain(HttpSecurity http, UserService userService) throws Exception{
         return http.authorizeHttpRequests(authz -> authz
             // .anyRequest().permitAll()
             .requestMatchers(HttpMethod.POST, "/login").permitAll()
@@ -74,10 +84,13 @@ public class SpringSecurityConfig {
         ).cors(cors -> cors.configurationSource(configurationSource()))
         .addFilter(new JwtAuthenticationFilter(authenticationManager()))
         .addFilter(new JwtValidationFilter(authenticationManager()))
+        .oauth2Login(oauth -> oauth
+            .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService))
+            .successHandler(oAuth2SuccessHandler)
+        )
         .csrf(config -> config.disable())
-        .sessionManagement(managment -> managment.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .sessionManagement(managment -> managment.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .build();
     }
-
 }
 
