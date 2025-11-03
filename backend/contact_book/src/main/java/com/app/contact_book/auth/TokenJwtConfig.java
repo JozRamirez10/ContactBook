@@ -60,7 +60,7 @@ public class TokenJwtConfig {
     }
 
     public static Date expirationAccessToken(){
-        return new Date(System.currentTimeMillis() + 3 * 60 * 1000); // minutes * seconds * millis
+        return new Date(System.currentTimeMillis() + 15 * 60 * 1000); // minutes * seconds * millis
     }
 
     public static Date expirationRefreshToken(){
