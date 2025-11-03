@@ -20,13 +20,44 @@ import com.app.contact_book.auth.TokenJwtConfig;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Tag(name = "Authentication", description = "Endpoints for managing and rotating session tokens.")
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
+    @Operation(
+        summary = "Refresh the Access Token",
+        description = "Use the Refresh Token (stored in an HttpOnly cookie) to obtain a new Access Token. If successfully, it also rotates the Refresh Token."
+    )
+    @Parameter(
+        name = "refresh_token",
+        description = "Refresh Token JWT automatic sent in a cookie.",
+        example = "eyJhbGciOiJIUzI1NiJ9...",
+        in = io.swagger.v3.oas.annotations.enums.ParameterIn.COOKIE
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Access Token refreshed: Return a new Access Token in 'Authorization' header and a new Refresh Token in a cookie.",
+        headers = @io.swagger.v3.oas.annotations.headers.Header(
+            name = HEADER_AUTHORIZATION,
+            description = "New Access Token (Bearer token)",
+            schema = @Schema(type = "String", example = "Bearer eyJhbGciOiJIUzI1NiJ9...")
+        )
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Refresh Token invalid or null",
+        content = @Content(schema = @Schema(implementation = Map.class))
+    )
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token", required = false) String refreshToken,
         HttpServletResponse response){
@@ -61,6 +92,14 @@ public class AuthController {
         }
     }
 
+    @Operation(
+        summary = "Log out",
+        description = "Invalidates the session by expiring the Refresh Token."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Log out successfully."
+    )
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response){
         Cookie refreshCookie = getCookieExpiration("refresh_token");
