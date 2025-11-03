@@ -37,7 +37,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler{
         Cookie refreshCookie = getRefreshCookie("refresh_token", refreshToken);
         response.addCookie(refreshCookie);
 
-        response.sendRedirect("http://localhost:8080/api/users");
+        response.sendRedirect("http://localhost:8080/swagger-ui.html");
     }
 
 }
